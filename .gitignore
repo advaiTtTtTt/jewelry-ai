@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+venv/
+.venv/
+env/
+
+# Models & weights
+models/*.pth
+models/*.pt
+models/*.ckpt
+models/*.bin
+models/*.safetensors
+!models/.gitkeep
+
+# Generated outputs
+temp/
+outputs/
+*.glb
+*.stl
+*.obj
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
