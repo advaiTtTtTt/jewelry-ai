@@ -309,9 +309,9 @@ class ReconstructionPipeline:
         """
         self._load_triposr()
 
-        # TripoSR expects RGB (3-channel). If RGBA, composite on white background.
+        # TripoSR expects RGB (3-channel). If RGBA, composite on gray background.
         if image.mode == "RGBA":
-            bg = Image.new("RGB", image.size, (255, 255, 255))
+            bg = Image.new("RGB", image.size, (127, 127, 127))
             bg.paste(image, mask=image.split()[3])  # Use alpha as mask
             image = bg
         elif image.mode != "RGB":
@@ -378,14 +378,17 @@ class ReconstructionPipeline:
         Map 2D segmentation masks onto 3D mesh vertices using UV projection.
 
         Strategy:
-          1. For each of the 6 views, create a virtual camera
-          2. Project all 3D vertices → 2D pixel coordinates
-          3. Look up which segmentation mask the projection falls into
-          4. Majority-vote across visible views for each vertex
-          5. Fill unlabeled vertices via nearest-neighbor propagation
+          1. Project vertices from front/near-front cameras only (since
+             segmentation masks come from the front-facing original photo,
+             side/back views would map onto wrong mask regions)
+          2. Weight front-facing view heavily (5×) for accurate labeling
+          3. Majority-vote across weighted views for each vertex
+          4. Fill unlabeled vertices via nearest-neighbor propagation
 
         Returns: {vertex_index: semantic_label}
         """
+        from collections import Counter
+
         vertices = mesh.vertices  # (N, 3)
         n_verts = len(vertices)
 
@@ -396,9 +399,23 @@ class ReconstructionPipeline:
         parts = segmentation.get("parts", {})
         img_h, img_w = segmentation.get("image_size", (320, 320))
 
-        # For the primary (front) view, use the original segmentation masks directly
-        # For other views, we project vertices using known camera parameters
-        for view_idx, view_params in enumerate(ZERO123_VIEWS):
+        # Only use front-facing views for projection.
+        # The segmentation masks are from the original photo (roughly front-on),
+        # so side/back view projections land on wrong mask regions and inject noise.
+        PROJECTION_VIEWS = [
+            # Primary front view — matches the original photo angle best
+            {"azimuth": 0,   "elevation": 0,   "weight": 5},
+            # Near-front views with moderate weight
+            {"azimuth": 30,  "elevation": 20,  "weight": 2},   # front_right
+            {"azimuth": 330, "elevation": -10, "weight": 2},   # front_left
+            # Slight side views with low weight (still somewhat visible from front)
+            {"azimuth": 60,  "elevation": 10,  "weight": 1},
+            {"azimuth": 300, "elevation": 10,  "weight": 1},
+        ]
+
+        for view_params in PROJECTION_VIEWS:
+            weight = view_params["weight"]
+
             # Build projection matrix for this view
             proj_matrix = self._build_projection_matrix(
                 azimuth=view_params["azimuth"],
@@ -425,15 +442,14 @@ class ReconstructionPipeline:
                     for label, part_data in parts.items():
                         mask = part_data["mask"]
                         if mask[py, px]:
-                            label_votes[vert_idx].append(label)
+                            # Add 'weight' copies so front views count more
+                            label_votes[vert_idx].extend([label] * weight)
                             break  # First matching mask wins for this view
 
         # Majority vote for each vertex
         vertex_labels = {}
         for i in range(n_verts):
             if label_votes[i]:
-                # Most common label
-                from collections import Counter
                 counts = Counter(label_votes[i])
                 vertex_labels[i] = counts.most_common(1)[0][0]
 
@@ -441,7 +457,6 @@ class ReconstructionPipeline:
         vertex_labels = self._propagate_labels(vertices, vertex_labels, n_verts)
 
         # Log label distribution
-        from collections import Counter
         dist = Counter(vertex_labels.values())
         logger.info("Vertex label distribution: %s", dict(dist))
 

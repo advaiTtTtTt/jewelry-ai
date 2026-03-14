@@ -406,8 +406,8 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
 
 function Section({ title, children }) {
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <h3 style={{ fontSize: '14px', color: '#aaa', margin: '0 0 8px 0', fontWeight: 500 }}>
+    <div style={{ marginBottom: '28px' }}>
+      <h3 style={{ fontSize: '14px', color: '#aaa', margin: '0 0 10px 0', fontWeight: 500 }}>
         {title}
       </h3>
       {children}
@@ -431,16 +431,22 @@ function SwatchButton({ hex, label, selected, onClick }) {
         boxShadow: selected ? '0 0 12px rgba(255,255,255,0.3)' : 'none',
         transform: selected ? 'scale(1.1)' : 'scale(1)',
         position: 'relative',
+        marginBottom: '22px',
+        flexShrink: 0,
       }}
     >
       <span style={{
         position: 'absolute',
-        bottom: '-18px',
+        bottom: '-20px',
         left: '50%',
         transform: 'translateX(-50%)',
         fontSize: '9px',
         color: '#aaa',
         whiteSpace: 'nowrap',
+        maxWidth: '56px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        textAlign: 'center',
       }}>
         {label}
       </span>
