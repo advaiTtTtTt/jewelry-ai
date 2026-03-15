@@ -291,6 +291,12 @@ class MaterialApplier:
                         if isinstance(r, list) and len(r) == 2:
                             for idx in range(r[0], r[1] + 1):
                                 vert_to_label[idx] = label
+                elif isinstance(ranges, str):
+                    # Handle index → label dicts (e.g., {"0": "metal", "1": "gemstone"})
+                    try:
+                        vert_to_label[int(label)] = ranges
+                    except (TypeError, ValueError):
+                        continue
                 elif isinstance(ranges, bool):
                     continue  # Skip boolean flags like "metal": True
 

@@ -93,9 +93,9 @@ const containerStyle = {
   display: 'flex',
   width: '100vw',
   height: '100vh',
-  background: '#121212',
-  color: '#e0e0e0',
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  background: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.55), transparent 35%), radial-gradient(circle at 80% 10%, rgba(64,92,178,0.12), transparent 35%), linear-gradient(140deg, #eef2ff 0%, #dde6ff 35%, #eef2ff 100%)',
+  color: '#1c2333',
+  fontFamily: "'Source Sans Pro', 'Inter', 'Segoe UI', sans-serif",
   overflow: 'hidden',
 };
 
@@ -104,6 +104,7 @@ const viewerContainerStyle = {
   display: 'flex',
   flexDirection: 'column',
   position: 'relative',
+  padding: '18px',
 };
 
 const statusBarStyle = {
@@ -111,11 +112,12 @@ const statusBarStyle = {
   bottom: 0,
   left: 0,
   right: 0,
-  padding: '8px 16px',
-  background: 'rgba(0,0,0,0.5)',
+  padding: '10px 18px',
+  background: 'rgba(255,255,255,0.72)',
   backdropFilter: 'blur(8px)',
   fontSize: '12px',
-  color: '#888',
+  color: '#1c2333',
   display: 'flex',
   alignItems: 'center',
+  borderTop: '1px solid rgba(31,58,147,0.12)',
 };

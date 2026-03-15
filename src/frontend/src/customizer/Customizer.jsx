@@ -350,7 +350,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
       `}</style>
       
       {/* Header */}
-      <h2 style={{ margin: '0 0 16px 0', color: '#f0f0f0', fontSize: '20px' }}>
+      <h2 style={{ margin: '0 0 16px 0', color: '#e9ecf5', fontSize: '20px', fontFamily: '"Playfair Display", "Georgia", serif', letterSpacing: '0.3px' }}>
         💎 Jewelry AI Customizer
       </h2>
 
@@ -363,7 +363,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
           style={dropzoneStyle(imagePreview)}
         >
           {isProcessingImage ? (
-            <div style={{ textAlign: 'center', color: '#888' }}>
+            <div style={{ textAlign: 'center', color: '#e9ecf5' }}>
               <div style={{ fontSize: '24px', marginBottom: '8px' }} className="spinner">⏳</div>
               <div>Processing image...</div>
             </div>
@@ -371,13 +371,13 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
             <div style={{ textAlign: 'center' }}>
               <img src={imagePreview} alt="Preview" style={{ maxHeight: '160px', borderRadius: '8px' }} />
               {imageInfo && (
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '6px' }}>
+                <div style={{ fontSize: '11px', color: '#e9ecf5', marginTop: '6px' }}>
                   {imageInfo.width} × {imageInfo.height} px • {imageInfo.size}
                 </div>
               )}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', color: '#888' }}>
+            <div style={{ textAlign: 'center', color: '#e9ecf5' }}>
               <div style={{ fontSize: '32px', marginBottom: '8px' }}>📷</div>
               <div>Drag & drop, paste, or click to upload</div>
               <div style={{ fontSize: '12px', marginTop: '4px' }}>JPEG, PNG, WebP • Auto-resized</div>
@@ -395,7 +395,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
         {/* Demo images */}
         {demoImages.length > 0 && (
           <div style={{ marginTop: '8px' }}>
-            <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>Or try a demo:</div>
+            <div style={{ fontSize: '12px', color: '#e9ecf5', marginBottom: '4px' }}>Or try a demo:</div>
             <div style={{ display: 'flex', gap: '8px' }}>
               {demoImages.map((demo) => (
                 <button
@@ -432,7 +432,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
             <div style={progressBarBg}>
               <div style={{ ...progressBarFill, width: `${progress}%` }} />
             </div>
-            <div style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>{statusMsg}</div>
+            <div style={{ fontSize: '12px', color: '#e9ecf5', marginTop: '4px' }}>{statusMsg}</div>
           </div>
         )}
 
@@ -443,7 +443,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
 
         {/* Detected parts */}
         {detectedParts.length > 0 && (
-          <div style={{ fontSize: '12px', color: '#8b8', marginTop: '8px' }}>
+          <div style={{ fontSize: '12px', color: '#1f3a93', marginTop: '8px' }}>
             ✓ Detected: {detectedParts.join(', ')}
           </div>
         )}
@@ -520,7 +520,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
             onChange={(e) => updateShape('prong_count', parseInt(e.target.value || '0', 10))}
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', color: '#aaa' }}>Band profile</span>
+            <span style={{ fontSize: '12px', color: '#e9ecf5' }}>Band profile</span>
             <select
               value={shapeParams.band_profile}
               onChange={(e) => updateShape('band_profile', e.target.value)}
@@ -532,7 +532,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', color: '#aaa' }}>Gem cut</span>
+            <span style={{ fontSize: '12px', color: '#e9ecf5' }}>Gem cut</span>
             <select
               value={shapeParams.gem_cut}
               onChange={(e) => updateShape('gem_cut', e.target.value)}
@@ -543,7 +543,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
               <option value="princess">Princess</option>
             </select>
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#aaa', fontSize: '13px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#e9ecf5', fontSize: '13px' }}>
             <input
               type="checkbox"
               checked={shapeParams.has_gemstone}
@@ -564,7 +564,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
         >
           {geometryBusy ? '⏳ Applying geometry...' : '📐 Apply geometry tweaks'}
         </button>
-        <div style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>
+        <div style={{ fontSize: '12px', color: '#e9ecf5', marginTop: '6px' }}>
           Requires a completed job. Updates the GLB and keeps your material choices.
         </div>
       </Section>
@@ -572,7 +572,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
       {/* ── Budget Advisor ───────────────────────────────────── */}
       <Section title="5. Budget Check">
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span style={{ color: '#aaa' }}>$</span>
+          <span style={{ color: '#e9ecf5' }}>$</span>
           <input
             type="number"
             value={budget}
@@ -594,13 +594,13 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
 
             {budgetResult.suggestions?.length > 0 && (
               <div style={{ marginTop: '8px' }}>
-                <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>Suggestions:</div>
+                <div style={{ fontSize: '12px', color: '#e9ecf5', marginBottom: '4px' }}>Suggestions:</div>
                 {budgetResult.suggestions.slice(0, 3).map((s, i) => (
                   <div key={i} style={suggestionStyle}>
                     <div style={{ fontSize: '13px' }}>
                       Replace <b>{s.replace}</b> → <b>{s.with}</b>
                     </div>
-                    <div style={{ fontSize: '11px', color: '#aaa' }}>
+                    <div style={{ fontSize: '11px', color: '#e9ecf5' }}>
                       Save ${s.savings} | Similarity: {Math.round(s.visual_similarity * 100)}%
                     </div>
                     <button
@@ -634,10 +634,8 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
 
 function Section({ title, children }) {
   return (
-    <div style={{ marginBottom: '28px' }}>
-      <h3 style={{ fontSize: '14px', color: '#aaa', margin: '0 0 10px 0', fontWeight: 500 }}>
-        {title}
-      </h3>
+    <div style={sectionCardStyle}>
+      <h3 style={sectionHeaderStyle}>{title}</h3>
       {children}
     </div>
   );
@@ -661,11 +659,11 @@ function SwatchButton({ hex, label, selected, onClick }) {
         width: '48px',
         height: '48px',
         borderRadius: '50%',
-        border: selected ? '3px solid #fff' : '2px solid rgba(255,255,255,0.2)',
+        border: selected ? '3px solid #1f3a93' : '2px solid rgba(31,58,147,0.25)',
         background: hex,
         cursor: 'pointer',
         transition: 'all 0.15s',
-        boxShadow: selected ? '0 0 12px rgba(255,255,255,0.3)' : 'none',
+        boxShadow: selected ? '0 0 14px rgba(31,58,147,0.35)' : 'none',
         transform: selected ? 'scale(1.1)' : 'scale(1)',
         position: 'relative',
         marginBottom: '22px',
@@ -678,7 +676,7 @@ function SwatchButton({ hex, label, selected, onClick }) {
         left: '50%',
         transform: 'translateX(-50%)',
         fontSize: '9px',
-        color: '#aaa',
+        color: '#e9ecf5',
         whiteSpace: 'nowrap',
         maxWidth: '56px',
         overflow: 'hidden',
@@ -696,53 +694,60 @@ function SwatchButton({ hex, label, selected, onClick }) {
 // ═══════════════════════════════════════════════════════════════════════
 
 const panelStyle = {
-  width: '340px',
+  width: '380px',
   height: '100%',
-  padding: '20px',
-  background: '#1e1e2e',
-  borderRight: '1px solid #333',
+  padding: '22px',
+  background: 'linear-gradient(185deg, rgba(7,14,28,0.94) 0%, rgba(10,18,38,0.9) 45%, rgba(12,24,48,0.9) 100%)',
+  borderRight: '1px solid rgba(255,255,255,0.06)',
+  boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
   overflowY: 'auto',
   flexShrink: 0,
+  fontFamily: '"Source Sans Pro", "Inter", "Segoe UI", sans-serif',
+  color: '#e9ecf5',
+  backdropFilter: 'blur(16px)',
 };
 
 const dropzoneStyle = (hasImage) => ({
-  border: '2px dashed rgba(255,255,255,0.2)',
+  border: '2px dashed rgba(214,180,106,0.45)',
   borderRadius: '12px',
   padding: '20px',
   textAlign: 'center',
   cursor: 'pointer',
-  transition: 'border-color 0.2s',
+  transition: 'border-color 0.2s, transform 0.2s',
   minHeight: hasImage ? 'auto' : '140px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  background: 'rgba(255,255,255,0.04)',
+  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)',
 });
 
 const convertBtnStyle = {
   width: '100%',
   marginTop: '12px',
   padding: '12px',
-  border: 'none',
-  borderRadius: '8px',
-  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-  color: '#fff',
+  border: '1px solid rgba(214,180,106,0.65)',
+  borderRadius: '12px',
+  background: 'linear-gradient(135deg, #1f3a93, #0ea5e9)',
+  color: '#f7f9ff',
   fontSize: '15px',
   fontWeight: '700',
   cursor: 'pointer',
-  transition: 'opacity 0.2s',
+  transition: 'opacity 0.2s, transform 0.15s',
+  boxShadow: '0 12px 28px rgba(0,0,0,0.35)',
 };
 
 const progressBarBg = {
   width: '100%',
   height: '6px',
-  background: '#333',
+  background: 'rgba(255,255,255,0.08)',
   borderRadius: '3px',
   overflow: 'hidden',
 };
 
 const progressBarFill = {
   height: '100%',
-  background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+  background: 'linear-gradient(90deg, #0ea5e9, #d6b46a)',
   transition: 'width 0.3s',
   borderRadius: '3px',
 };
@@ -750,53 +755,59 @@ const progressBarFill = {
 const errorStyle = {
   marginTop: '8px',
   padding: '8px 12px',
-  background: 'rgba(239,68,68,0.15)',
-  border: '1px solid rgba(239,68,68,0.3)',
-  borderRadius: '6px',
-  color: '#f88',
+  background: 'rgba(214,67,64,0.12)',
+  border: '1px solid rgba(214,67,64,0.3)',
+  borderRadius: '8px',
+  color: '#f8d7da',
   fontSize: '13px',
 };
 
 const inputStyle = {
   flex: 1,
-  padding: '8px 12px',
-  background: '#2a2a3e',
-  border: '1px solid #444',
-  borderRadius: '6px',
-  color: '#fff',
+  padding: '10px 12px',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: '12px',
+  color: '#e9ecf5',
   fontSize: '14px',
   outline: 'none',
+  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.25)',
 };
 
 const smallBtnStyle = {
   padding: '8px 16px',
-  border: 'none',
-  borderRadius: '6px',
-  background: '#6366f1',
-  color: '#fff',
+  border: '1px solid rgba(214,180,106,0.5)',
+  borderRadius: '12px',
+  background: 'linear-gradient(135deg, #1f3a93, #0ea5e9)',
+  color: '#f7f9ff',
+  fontWeight: '700',
   fontSize: '13px',
   cursor: 'pointer',
+  boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
 };
 
 const demoBtnStyle = {
-  padding: '4px 12px',
-  border: '1px solid #444',
-  borderRadius: '16px',
-  background: 'transparent',
-  color: '#aaa',
+  padding: '6px 14px',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: '18px',
+  background: 'rgba(255,255,255,0.06)',
+  color: '#e9ecf5',
   fontSize: '12px',
   cursor: 'pointer',
+  boxShadow: '0 6px 16px rgba(0,0,0,0.25)',
 };
 
 const suggestionStyle = {
-  padding: '8px',
-  background: '#2a2a3e',
-  borderRadius: '6px',
+  padding: '10px',
+  background: 'rgba(255,255,255,0.04)',
+  borderRadius: '10px',
   marginBottom: '6px',
   display: 'flex',
   flexDirection: 'column',
   gap: '2px',
   position: 'relative',
+  border: '1px solid rgba(255,255,255,0.08)',
+  boxShadow: '0 8px 18px rgba(0,0,0,0.25)',
 };
 
 const applyBtnStyle = {
@@ -805,10 +816,31 @@ const applyBtnStyle = {
   top: '50%',
   transform: 'translateY(-50%)',
   padding: '4px 12px',
-  border: 'none',
-  borderRadius: '4px',
-  background: '#6366f1',
-  color: '#fff',
+  border: '1px solid rgba(214,180,106,0.6)',
+  borderRadius: '8px',
+  background: 'linear-gradient(135deg, #1f3a93, #0ea5e9)',
+  color: '#f7f9ff',
   fontSize: '11px',
   cursor: 'pointer',
+  boxShadow: '0 8px 18px rgba(0,0,0,0.25)',
+};
+
+const sectionCardStyle = {
+  marginBottom: '20px',
+  padding: '14px',
+  borderRadius: '14px',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  boxShadow: '0 12px 28px rgba(0,0,0,0.28)',
+  backdropFilter: 'blur(10px)',
+};
+
+const sectionHeaderStyle = {
+  fontSize: '13px',
+  color: '#d6b46a',
+  margin: '0 0 10px 0',
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  fontFamily: '"Playfair Display", "Georgia", serif',
 };

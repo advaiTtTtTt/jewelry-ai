@@ -235,8 +235,8 @@ export default function JewelryViewer({
     <div style={{
       width: '100%',
       height: '100%',
-      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-      borderRadius: '12px',
+      background: 'linear-gradient(145deg, #0b132b 0%, #0f1c3d 45%, #182b57 100%)',
+      borderRadius: '14px',
       overflow: 'hidden',
       ...style,
     }}>
