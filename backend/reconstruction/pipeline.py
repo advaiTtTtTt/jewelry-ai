@@ -309,11 +309,20 @@ class ReconstructionPipeline:
         """
         self._load_triposr()
 
-        # TripoSR expects RGB (3-channel). If RGBA, composite on gray background.
+        # TripoSR expects centered object with 0.85 ratio on gray background
         if image.mode == "RGBA":
-            bg = Image.new("RGB", image.size, (127, 127, 127))
-            bg.paste(image, mask=image.split()[3])  # Use alpha as mask
-            image = bg
+            try:
+                from tsr.utils import resize_foreground
+                image = resize_foreground(image, 0.85)
+                # Convert back to array for compositing or do it in PIL
+                img_arr = np.array(image).astype(np.float32) / 255.0
+                img_arr = img_arr[:, :, :3] * img_arr[:, :, 3:4] + (1 - img_arr[:, :, 3:4]) * 0.5
+                image = Image.fromarray((img_arr * 255.0).astype(np.uint8))
+            except ImportError:
+                # Fallback purely via PIL
+                bg = Image.new("RGB", image.size, (127, 127, 127))
+                bg.paste(image, mask=image.split()[3])
+                image = bg
         elif image.mode != "RGB":
             image = image.convert("RGB")
 
