@@ -167,7 +167,7 @@ info "Zero123++ and TripoSR weights will be auto-downloaded on first inference r
 # ─── Step 5: Frontend Setup ────────────────────────────────────────
 info "Step 5/5: Installing frontend dependencies..."
 
-cd frontend
+cd src/frontend
 npm install 2>&1 | tail -3
 cd "$SCRIPT_DIR"
 log "Frontend dependencies installed"
@@ -186,7 +186,7 @@ echo "    source venv/bin/activate"
 echo "    uvicorn backend.api:app --reload --host 0.0.0.0 --port 8000"
 echo ""
 echo "    # Terminal 2: Frontend"
-echo "    cd $(pwd)/frontend"
+echo "    cd $(pwd)/src/frontend"
 echo "    npm run dev"
 echo ""
 echo "    Then open: http://localhost:5173"

@@ -142,7 +142,7 @@ uvicorn backend.api:app --reload --host 0.0.0.0 --port 8000
 
 ### Starting the frontend (Terminal 2)
 ```bash
-cd frontend
+cd src/frontend
 npm run dev
 ```
 

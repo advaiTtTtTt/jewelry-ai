@@ -1,0 +1,83 @@
+        self,
+        image: Image.Image,
+        segmentation: Optional[dict] = None,
+        quality: str = "high",
+    ) -> dict:
+        """
+        Full reconstruction pipeline: image → GLB with semantic vertex labels.
+
+        Args:
+            image: Input PIL Image (RGB or RGBA)
+            segmentation: Output from JewelryDetector.detect() (optional)
+
+        Returns:
+            {
+                "glb_path": str,           # Path to output GLB file
+                "vertex_labels": dict,     # {vertex_index: semantic_label}
+                "views": [PIL.Image],      # 6 multi-view images
+                "job_id": str,             # Unique identifier for this job
+            }
+        """
+        job_id = str(uuid.uuid4())[:8]
+        job_dir = self.output_dir / job_id
+        job_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.info("[%s] Starting reconstruction pipeline", job_id)
+
+        # Stage A: Remove background
+        logger.info("[%s] Stage A: Background removal", job_id)
+        clean_image = self._remove_background(image)
+        clean_image.save(job_dir / "input_clean.png")
+
+        # Stage B: Generate multi-view images via Zero123++
+        logger.info("[%s] Stage B: Multi-view generation (Zero123++)", job_id)
+        views = self._generate_multiviews(clean_image)
+        for i, view in enumerate(views):
+            view.save(job_dir / f"view_{i}_{ZERO123_VIEWS[i]['name']}.png")
+
+        # Stage C: Reconstruct 3D mesh via TripoSR
+        logger.info("[%s] Stage C: 3D mesh reconstruction (TripoSR)", job_id)
+        
+        # FIX: Do not pass the 6 Zero123++ views (they have gray backgrounds).
+        # Only pass the surgically cleaned, pure-white original image.
+        prepared_clean = self._prepare_for_triposr(clean_image)
+        images_to_triposr = [prepared_clean]
+
+        for i, prepared in enumerate(images_to_triposr):
+            prepared.save(job_dir / f"triposr_input_debug_{i}.png")
+
+        print(f"Feeding 1 perfectly masked original image to TripoSR (quality: {quality})")
+        mesh = self._reconstruct_mesh(images_to_triposr, quality=quality)
+        raw_glb_path = job_dir / "raw_mesh.glb"
+        mesh.export(str(raw_glb_path))
+
+        # Stage D: Map 2D segmentation masks to 3D vertex labels
+        logger.info("[%s] Stage D: Segmentation → vertex label mapping", job_id)
+        if segmentation and "parts" in segmentation:
+            vertex_labels = self._map_segmentation_to_vertices(
+                mesh, segmentation, views
+            )
+        else:
+            # No segmentation available — label everything as "metal"
+            vertex_labels = {i: "metal" for i in range(len(mesh.vertices))}
+
+        # Stage E: Inject vertex labels + PBR setup into GLB
+        logger.info("[%s] Stage E: GLB metadata injection", job_id)
+        final_glb_path = job_dir / "jewelry.glb"
+        self._inject_glb_metadata(raw_glb_path, final_glb_path, vertex_labels)
+
+        # Save vertex labels as JSON sidecar
+        labels_path = job_dir / "vertex_labels.json"
+        # Compress: group consecutive vertices with same label
+        compressed_labels = self._compress_vertex_labels(vertex_labels)
+        with open(labels_path, "w") as f:
+            json.dump(compressed_labels, f)
+
+        logger.info("[%s] Pipeline complete → %s", job_id, final_glb_path)
+
+        return {
+            "glb_path": str(final_glb_path),
+            "vertex_labels": compressed_labels,
+            "views": views,
+            "job_id": job_id,
+        }

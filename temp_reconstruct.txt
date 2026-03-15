@@ -1,0 +1,83 @@
+    85	        self,
+    86	        image: Image.Image,
+    87	        segmentation: Optional[dict] = None,
+    88	        quality: str = "high",
+    89	    ) -> dict:
+    90	        """
+    91	        Full reconstruction pipeline: image → GLB with semantic vertex labels.
+    92	
+    93	        Args:
+    94	            image: Input PIL Image (RGB or RGBA)
+    95	            segmentation: Output from JewelryDetector.detect() (optional)
+    96	
+    97	        Returns:
+    98	            {
+    99	                "glb_path": str,           # Path to output GLB file
+   100	                "vertex_labels": dict,     # {vertex_index: semantic_label}
+   101	                "views": [PIL.Image],      # 6 multi-view images
+   102	                "job_id": str,             # Unique identifier for this job
+   103	            }
+   104	        """
+   105	        job_id = str(uuid.uuid4())[:8]
+   106	        job_dir = self.output_dir / job_id
+   107	        job_dir.mkdir(parents=True, exist_ok=True)
+   108	
+   109	        logger.info("[%s] Starting reconstruction pipeline", job_id)
+   110	
+   111	        # Stage A: Remove background
+   112	        logger.info("[%s] Stage A: Background removal", job_id)
+   113	        clean_image = self._remove_background(image)
+   114	        clean_image.save(job_dir / "input_clean.png")
+   115	
+   116	        # Stage B: Generate multi-view images via Zero123++
+   117	        logger.info("[%s] Stage B: Multi-view generation (Zero123++)", job_id)
+   118	        views = self._generate_multiviews(clean_image)
+   119	        for i, view in enumerate(views):
+   120	            view.save(job_dir / f"view_{i}_{ZERO123_VIEWS[i]['name']}.png")
+   121	
+   122	        # Stage C: Reconstruct 3D mesh via TripoSR
+   123	        logger.info("[%s] Stage C: 3D mesh reconstruction (TripoSR)", job_id)
+   124	        
+   125	        # FIX: Do not pass the 6 Zero123++ views (they have gray backgrounds).
+   126	        # Only pass the surgically cleaned, pure-white original image.
+   127	        prepared_clean = self._prepare_for_triposr(clean_image)
+   128	        images_to_triposr = [prepared_clean]
+   129	
+   130	        for i, prepared in enumerate(images_to_triposr):
+   131	            prepared.save(job_dir / f"triposr_input_debug_{i}.png")
+   132	
+   133	        print(f"Feeding 1 perfectly masked original image to TripoSR (quality: {quality})")
+   134	        mesh = self._reconstruct_mesh(images_to_triposr, quality=quality)
+   135	        raw_glb_path = job_dir / "raw_mesh.glb"
+   136	        mesh.export(str(raw_glb_path))
+   137	
+   138	        # Stage D: Map 2D segmentation masks to 3D vertex labels
+   139	        logger.info("[%s] Stage D: Segmentation → vertex label mapping", job_id)
+   140	        if segmentation and "parts" in segmentation:
+   141	            vertex_labels = self._map_segmentation_to_vertices(
+   142	                mesh, segmentation, views
+   143	            )
+   144	        else:
+   145	            # No segmentation available — label everything as "metal"
+   146	            vertex_labels = {i: "metal" for i in range(len(mesh.vertices))}
+   147	
+   148	        # Stage E: Inject vertex labels + PBR setup into GLB
+   149	        logger.info("[%s] Stage E: GLB metadata injection", job_id)
+   150	        final_glb_path = job_dir / "jewelry.glb"
+   151	        self._inject_glb_metadata(raw_glb_path, final_glb_path, vertex_labels)
+   152	
+   153	        # Save vertex labels as JSON sidecar
+   154	        labels_path = job_dir / "vertex_labels.json"
+   155	        # Compress: group consecutive vertices with same label
+   156	        compressed_labels = self._compress_vertex_labels(vertex_labels)
+   157	        with open(labels_path, "w") as f:
+   158	            json.dump(compressed_labels, f)
+   159	
+   160	        logger.info("[%s] Pipeline complete → %s", job_id, final_glb_path)
+   161	
+   162	        return {
+   163	            "glb_path": str(final_glb_path),
+   164	            "vertex_labels": compressed_labels,
+   165	            "views": views,
+   166	            "job_id": job_id,
+   167	        }

@@ -99,7 +99,7 @@ uvicorn backend.api:app --reload --host 0.0.0.0 --port 8000
 ### 4. Start the frontend (new terminal)
 
 ```bash
-cd frontend
+cd src/frontend
 npm run dev
 ```
 
@@ -115,32 +115,34 @@ http://localhost:5173
 
 ```
 jewelry-ai/
-├── backend/                    # Python FastAPI backend
-│   ├── api.py                  # All REST endpoints + SSE streaming
-│   ├── segmentation/
-│   │   └── detector.py         # GroundingDINO + SAM2 component detection
-│   ├── reconstruction/
-│   │   └── pipeline.py         # Zero123++ → TripoSR 3D reconstruction
-│   ├── materials/
-│   │   ├── definitions.py      # PBR material database (metals + gemstones)
-│   │   └── applier.py          # GLB material swapping (<50ms)
-│   └── budget/
-│       └── advisor.py          # Cost calculator + substitution engine
+├── src/
+│   ├── backend/                # Python FastAPI backend
+│   │   ├── api.py              # All REST endpoints + SSE streaming
+│   │   ├── segmentation/
+│   │   │   └── detector.py     # GroundingDINO + SAM2 component detection
+│   │   ├── reconstruction/
+│   │   │   └── pipeline.py     # Zero123++ → TripoSR 3D reconstruction
+│   │   ├── materials/
+│   │   │   ├── definitions.py  # PBR material database (metals + gemstones)
+│   │   │   └── applier.py      # GLB material swapping (<50ms)
+│   │   └── budget/
+│   │       └── advisor.py      # Cost calculator + substitution engine
+│   │
+│   └── frontend/              # React + Vite frontend
+│       ├── src/
+│       │   ├── App.jsx         # Root component (state wiring)
+│       │   ├── customizer/
+│       │   │   └── Customizer.jsx
+│       │   ├── viewer/
+│       │   │   └── JewelryViewer.jsx
+│       │   ├── exporter/
+│       │   │   └── Exporter.jsx
+│       │   └── shaders/
+│       │       └── HighIORMaterial.js
+│       ├── package.json
+│       └── vite.config.js
 │
-├── frontend/                   # React + Vite frontend
-│   ├── src/
-│   │   ├── App.jsx             # Root component (state wiring)
-│   │   ├── customizer/
-│   │   │   └── Customizer.jsx  # Upload, material pickers, budget UI
-│   │   ├── viewer/
-│   │   │   └── JewelryViewer.jsx  # Three.js 3D viewer
-│   │   ├── exporter/
-│   │   │   └── Exporter.jsx    # GLB/STL download buttons
-│   │   └── shaders/
-│   │       └── HighIORMaterial.js  # Custom shader for diamond IOR >2.333
-│   ├── package.json
-│   └── vite.config.js
-│
+├── backend/                    # Namespace shim → src/backend (keeps imports stable)
 ├── models/                     # AI model weights (gitignored, downloaded by setup.sh)
 │   ├── TripoSR/                # TripoSR source code (cloned)
 │   ├── groundingdino_swint_ogc.pth
@@ -301,7 +303,7 @@ App.jsx
 ### Frontend can't connect to backend
 - Ensure backend is running on port 8000
 - Check CORS — the backend allows `localhost:5173` and `localhost:3000`
-- Try setting `VITE_API_URL=http://127.0.0.1:8000` in `frontend/.env.local`
+- Try setting `VITE_API_URL=http://127.0.0.1:8000` in `src/frontend/.env.local`
 
 ### Models downloading slowly
 - Zero123++ and TripoSR download from HuggingFace on first use
@@ -319,15 +321,15 @@ source venv/bin/activate
 ```
 
 ### Adding a new metal
-1. Add entry to `METALS` dict in [backend/materials/definitions.py](backend/materials/definitions.py)
-2. Mirror it in `METALS` const in [frontend/src/customizer/Customizer.jsx](frontend/src/customizer/Customizer.jsx)
-3. Add price per gram in `METAL_PRICES` in [backend/budget/advisor.py](backend/budget/advisor.py)
+1. Add entry to `METALS` dict in [src/backend/materials/definitions.py](src/backend/materials/definitions.py)
+2. Mirror it in `METALS` const in [src/frontend/src/customizer/Customizer.jsx](src/frontend/src/customizer/Customizer.jsx)
+3. Add price per gram in `METAL_PRICES` in [src/backend/budget/advisor.py](src/backend/budget/advisor.py)
 
 ### Adding a new gemstone
-1. Add entry to `GEMSTONES` dict in [backend/materials/definitions.py](backend/materials/definitions.py) (include IOR, transmission, attenuation)
-2. Mirror it in `GEMSTONES` const in [frontend/src/customizer/Customizer.jsx](frontend/src/customizer/Customizer.jsx)
-3. Add price per carat in `GEMSTONE_PRICES` in [backend/budget/advisor.py](backend/budget/advisor.py)
-4. Add similarity scores in `GEMSTONE_SIMILARITY` in [backend/budget/advisor.py](backend/budget/advisor.py)
+1. Add entry to `GEMSTONES` dict in [src/backend/materials/definitions.py](src/backend/materials/definitions.py) (include IOR, transmission, attenuation)
+2. Mirror it in `GEMSTONES` const in [src/frontend/src/customizer/Customizer.jsx](src/frontend/src/customizer/Customizer.jsx)
+3. Add price per carat in `GEMSTONE_PRICES` in [src/backend/budget/advisor.py](src/backend/budget/advisor.py)
+4. Add similarity scores in `GEMSTONE_SIMILARITY` in [src/backend/budget/advisor.py](src/backend/budget/advisor.py)
 
 ### Backend hot-reload
 ```bash
@@ -337,7 +339,7 @@ The `--reload` flag auto-restarts on file changes.
 
 ### Frontend hot-reload
 ```bash
-cd frontend && npm run dev
+cd src/frontend && npm run dev
 ```
 Vite has instant HMR (Hot Module Replacement) out of the box.
 
