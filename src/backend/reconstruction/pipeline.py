@@ -150,6 +150,7 @@ class ReconstructionPipeline:
             "vertex_labels": compressed_labels,
             "views": [clean_image],
             "job_id": job_id,
+            "blueprint": blueprint,
         }
 
     # ═══════════════════════════════════════════════════════════════════

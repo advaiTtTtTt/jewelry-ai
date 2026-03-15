@@ -58,8 +58,36 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
   const [budgetResult, setBudgetResult] = useState(null);
   const [detectedParts, setDetectedParts] = useState([]);
   const [demoImages, setDemoImages] = useState([]);
+  const [geometryBusy, setGeometryBusy] = useState(false);
+  const [shapeParams, setShapeParams] = useState({
+    band_profile: 'D-shape',
+    band_width_mm: 3.5,
+    band_thickness_mm: 2.5,
+    inner_radius_mm: 8.5,
+    has_gemstone: true,
+    gem_cut: 'round_brilliant',
+    gem_radius_mm: 3.5,
+    prong_count: 4,
+  });
 
   const fileInputRef = useRef(null);
+
+  const getCurrentMaterials = useCallback(() => {
+    const currentMetal = METALS[selectedMetal];
+    const currentGem = GEMSTONES[selectedGem];
+    return {
+      metal: currentMetal,
+      prong: currentMetal,
+      setting: currentMetal,
+      bail: currentMetal,
+      clasp: currentMetal,
+      gemstone: currentGem,
+    };
+  }, [selectedMetal, selectedGem]);
+
+  const updateShape = useCallback((field, value) => {
+    setShapeParams((prev) => ({ ...prev, [field]: value }));
+  }, []);
 
   // Load demo images on mount
   useEffect(() => {
@@ -191,23 +219,16 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
           eventSource.close();
           setConverting(false);
           setDetectedParts(data.result?.detected_parts || []);
+          if (data.result?.blueprint) {
+            setShapeParams((prev) => ({ ...prev, ...data.result.blueprint }));
+          }
 
           // Fetch the GLB and pass to viewer
           fetch(`${API_BASE}/export/glb/${job_id}`)
             .then(r => r.blob())
             .then(blob => {
               if (onGlbLoaded) {
-                // Build current material selections to apply immediately
-                const currentMetal = METALS[selectedMetal];
-                const currentGem = GEMSTONES[selectedGem];
-                const initialMaterials = {
-                  metal: currentMetal,
-                  prong: currentMetal,
-                  setting: currentMetal,
-                  bail: currentMetal,
-                  clasp: currentMetal,
-                  gemstone: currentGem,
-                };
+                const initialMaterials = getCurrentMaterials();
                 onGlbLoaded(blob, data.result?.vertex_labels, initialMaterials);
               }
             });
@@ -230,7 +251,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
       setConverting(false);
       setError(err.message);
     }
-  }, [imageFile, converting, onGlbLoaded, setJobId]);
+  }, [imageFile, converting, onGlbLoaded, setJobId, getCurrentMaterials]);
 
   // ─── Material Swap (instant, client-side) ────────────────────────
   const handleMetalChange = useCallback((metalKey) => {
@@ -277,6 +298,36 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
       console.error('Budget check error:', err);
     }
   }, [budget, selectedGem, selectedMetal]);
+
+  const handleApplyGeometry = useCallback(async () => {
+    if (!jobId || geometryBusy) return;
+    setGeometryBusy(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE}/customize/geometry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: jobId, ...shapeParams }),
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Geometry update failed');
+      }
+      const data = await response.json();
+      if (data.blueprint) {
+        setShapeParams((prev) => ({ ...prev, ...data.blueprint }));
+      }
+      const glbResp = await fetch(`${API_BASE}/export/glb/${jobId}`);
+      const blob = await glbResp.blob();
+      if (onGlbLoaded) {
+        onGlbLoaded(blob, data.vertex_labels, getCurrentMaterials());
+      }
+    } catch (err) {
+      setError(err.message || 'Geometry update failed');
+    } finally {
+      setGeometryBusy(false);
+    }
+  }, [jobId, geometryBusy, shapeParams, onGlbLoaded, getCurrentMaterials]);
 
   // ─── Demo image handler ──────────────────────────────────────────
   const handleDemoClick = useCallback(async (demo) => {
@@ -428,8 +479,98 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
         </div>
       </Section>
 
+      {/* ── Geometry Tweaks ─────────────────────────────────── */}
+      <Section title="4. Geometry (band & stone)">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <LabeledInput
+            label="Band width (mm)"
+            type="number"
+            step="0.1"
+            value={shapeParams.band_width_mm}
+            onChange={(e) => updateShape('band_width_mm', parseFloat(e.target.value) || 0)}
+          />
+          <LabeledInput
+            label="Band thickness (mm)"
+            type="number"
+            step="0.1"
+            value={shapeParams.band_thickness_mm}
+            onChange={(e) => updateShape('band_thickness_mm', parseFloat(e.target.value) || 0)}
+          />
+          <LabeledInput
+            label="Inner radius (mm)"
+            type="number"
+            step="0.1"
+            value={shapeParams.inner_radius_mm}
+            onChange={(e) => updateShape('inner_radius_mm', parseFloat(e.target.value) || 0)}
+          />
+          <LabeledInput
+            label="Gem radius (mm)"
+            type="number"
+            step="0.1"
+            value={shapeParams.gem_radius_mm}
+            disabled={!shapeParams.has_gemstone}
+            onChange={(e) => updateShape('gem_radius_mm', parseFloat(e.target.value) || 0)}
+          />
+          <LabeledInput
+            label="Prongs (#)"
+            type="number"
+            step="1"
+            value={shapeParams.prong_count}
+            disabled={!shapeParams.has_gemstone}
+            onChange={(e) => updateShape('prong_count', parseInt(e.target.value || '0', 10))}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', color: '#aaa' }}>Band profile</span>
+            <select
+              value={shapeParams.band_profile}
+              onChange={(e) => updateShape('band_profile', e.target.value)}
+              style={inputStyle}
+            >
+              <option value="D-shape">D-shape</option>
+              <option value="flat">Flat</option>
+              <option value="round">Round</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', color: '#aaa' }}>Gem cut</span>
+            <select
+              value={shapeParams.gem_cut}
+              onChange={(e) => updateShape('gem_cut', e.target.value)}
+              style={inputStyle}
+              disabled={!shapeParams.has_gemstone}
+            >
+              <option value="round_brilliant">Round</option>
+              <option value="princess">Princess</option>
+            </select>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#aaa', fontSize: '13px' }}>
+            <input
+              type="checkbox"
+              checked={shapeParams.has_gemstone}
+              onChange={(e) => updateShape('has_gemstone', e.target.checked)}
+            />
+            Include gemstone
+          </label>
+        </div>
+        <button
+          onClick={handleApplyGeometry}
+          disabled={!jobId || geometryBusy}
+          style={{
+            ...convertBtnStyle,
+            marginTop: '12px',
+            background: 'linear-gradient(135deg, #10b981, #0ea5e9)',
+            opacity: (!jobId || geometryBusy) ? 0.5 : 1,
+          }}
+        >
+          {geometryBusy ? '⏳ Applying geometry...' : '📐 Apply geometry tweaks'}
+        </button>
+        <div style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>
+          Requires a completed job. Updates the GLB and keeps your material choices.
+        </div>
+      </Section>
+
       {/* ── Budget Advisor ───────────────────────────────────── */}
-      <Section title="4. Budget Check">
+      <Section title="5. Budget Check">
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span style={{ color: '#aaa' }}>$</span>
           <input
@@ -480,7 +621,7 @@ export default function Customizer({ onMaterialChange, onGlbLoaded, jobId, setJo
       </Section>
 
       {/* ── Export ────────────────────────────────────────────── */}
-      <Section title="5. Export">
+      <Section title="6. Export">
         <Exporter jobId={jobId} disabled={!jobId} />
       </Section>
     </div>
@@ -499,6 +640,15 @@ function Section({ title, children }) {
       </h3>
       {children}
     </div>
+  );
+}
+
+function LabeledInput({ label, ...rest }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <span style={{ fontSize: '12px', color: '#aaa' }}>{label}</span>
+      <input {...rest} style={inputStyle} />
+    </label>
   );
 }
 

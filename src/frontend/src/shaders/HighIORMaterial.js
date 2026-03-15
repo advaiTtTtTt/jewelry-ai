@@ -149,7 +149,8 @@ export function buildMaterialFromDef(matDef) {
 
     // Dispersion / "fire" (diamond, cubic zirconia)
     if (matDef.dispersion) {
-      params.dispersion = matDef.dispersion;
+      // Store for potential future shader use; MeshPhysicalMaterial does not support this property
+      params.userData = { ...(params.userData || {}), dispersion: matDef.dispersion };
     }
 
     // Use custom high-IOR material if needed

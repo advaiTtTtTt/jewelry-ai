@@ -125,6 +125,18 @@ class CustomizeRequest(BaseModel):
     material: str       # "yellow_gold", "diamond", etc.
 
 
+class GeometryRequest(BaseModel):
+    job_id: str
+    band_profile: Optional[str] = None
+    band_width_mm: Optional[float] = None
+    band_thickness_mm: Optional[float] = None
+    inner_radius_mm: Optional[float] = None
+    has_gemstone: Optional[bool] = None
+    gem_cut: Optional[str] = None
+    gem_radius_mm: Optional[float] = None
+    prong_count: Optional[int] = None
+
+
 class BudgetRequest(BaseModel):
     design_config: dict  # {"gemstone": {"material": "diamond", "carats": 1.0}, ...}
     budget: float
@@ -281,6 +293,7 @@ async def _run_conversion(job_id: str, image_path: Path):
             "vertex_labels": result["vertex_labels"],
             "detected_parts": detected_parts,
             "job_id": job_id,
+            "blueprint": result.get("blueprint", {}),
         }
 
         logger.info("[%s] Conversion completed successfully", job_id)
@@ -331,6 +344,7 @@ async def job_status(job_id: str):
                         "job_id": job_id,
                         "detected_parts": job["result"].get("detected_parts", []),
                         "vertex_labels": job["result"].get("vertex_labels", {}),
+                        "blueprint": job["result"].get("blueprint", {}),
                     }
 
                 if job["status"] == "failed":
@@ -407,6 +421,80 @@ async def customize_material(request: CustomizeRequest):
     except Exception as e:
         logger.exception("Material customization failed")
         raise HTTPException(status_code=500, detail=f"Customization failed: {str(e)}")
+
+
+# ─── POST /customize/geometry ─────────────────────────────────────
+@app.post("/customize/geometry")
+async def customize_geometry(request: GeometryRequest):
+    if request.job_id not in JOBS:
+        raise HTTPException(status_code=404, detail=f"Job '{request.job_id}' not found")
+
+    job = JOBS[request.job_id]
+    if job["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Job is not yet completed")
+
+    try:
+        from backend.reconstruction.gemini_vision import _default_params
+        from backend.reconstruction.ring_builder import RingBuilder
+        from backend.reconstruction.pipeline import ReconstructionPipeline
+        import trimesh
+    except Exception as e:
+        logger.exception("Geometry customization imports failed")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
+    # Merge stored blueprint with defaults and incoming overrides
+    base_params = job.get("result", {}).get("blueprint") or {}
+    params = {**_default_params(), **base_params}
+    overrides = request.model_dump(exclude_none=True)
+    overrides.pop("job_id", None)
+    params.update(overrides)
+
+    try:
+        builder = RingBuilder()
+        meshes = builder.build_ring(params)
+        combined = trimesh.util.concatenate(meshes)
+
+        vertex_labels = {}
+        offset = 0
+        for m in meshes:
+            label = m.metadata.get("semantic_label", "metal")
+            for j in range(len(m.vertices)):
+                vertex_labels[offset + j] = label
+            offset += len(m.vertices)
+
+        job_dir = Path(job["result"]["glb_path"]).parent
+        raw_glb_path = job_dir / "custom_raw.glb"
+        combined.export(str(raw_glb_path))
+
+        pipeline = ReconstructionPipeline(device="cpu", output_dir=str(job_dir))
+        final_glb_path = job_dir / "jewelry_custom.glb"
+        pipeline._inject_glb_metadata(raw_glb_path, final_glb_path, vertex_labels)
+
+        applier = get_applier()
+        split_glb = await asyncio.to_thread(
+            applier.split_mesh_by_labels,
+            final_glb_path,
+            vertex_labels,
+        )
+
+        with open(final_glb_path, "wb") as f:
+            f.write(split_glb)
+
+        job["result"].update({
+            "glb_path": str(final_glb_path),
+            "vertex_labels": vertex_labels,
+            "blueprint": params,
+        })
+
+        return {
+            "job_id": request.job_id,
+            "blueprint": params,
+            "vertex_labels": vertex_labels,
+        }
+
+    except Exception as e:
+        logger.exception("Geometry customization failed")
+        raise HTTPException(status_code=500, detail=f"Geometry customization failed: {str(e)}")
 
 
 # ─── GET /materials ─────────────────────────────────────────────────
